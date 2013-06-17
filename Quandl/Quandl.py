@@ -13,6 +13,7 @@ import json
 import pandas as pd
 import re
 import os
+import sys
 
 from dateutil import parser
 from numpy import genfromtxt
@@ -241,15 +242,19 @@ def _pushcodetest(code):
 
 def _getauthtoken(token):
     """Return and save API token to a pickle file for reuse."""
+    if sys.platform.startswith('win'):
+        token_path = os.path.expanduser('~/AppData/Roaming/Quandl/')
+    else:
+        token_path = os.path.expanduser('~/Quandl/')
+    if not os.path.exists(token_path):
+        os.mkdir(token_path)
+
     try:
-        savedtoken = pickle.load(open('authtoken.p', 'rb'))
+        savedtoken = pickle.load(open(os.path.join(token_path,'authtoken.p'), 'rb'))
     except IOError:
         savedtoken = False
     if token:
-        # Change to home directory to make sure to have
-        # write permission to save authtoken.p
-        os.chdir(os.path.expanduser('~'))
-        pickle.dump(token, open('authtoken.p', 'wb'))
+        pickle.dump(token, open(os.path.join(token_path, 'authtoken.p'), 'wb'))
         print("Token {} activated and saved for later use.".format(token))
     elif not savedtoken and not token:
         print("No authentication tokens found: usage will be limited.")
