@@ -55,7 +55,7 @@ def get(dataset, **kwargs):
     """
     kwargs.setdefault('sort_order', 'asc')
 
-    auth_token = _getauthtoken(kwargs.pop('authtoken', ''))
+    auth_token = kwargs.pop('authtoken', '')
     trim_start = _parse_dates(kwargs.pop('trim_start', None))
     trim_end = _parse_dates(kwargs.pop('trim_end', None))
     returns = kwargs.get('returns', 'pandas')
@@ -98,8 +98,7 @@ def push(data, code, name, authtoken='', desc='', override=False):
 
     """
     override = str(override).lower()
-    token = _getauthtoken(authtoken)
-    if token == '':
+    if authtoken == '':
         error = ("You need an API token to upload your data to Quandl, "
                  "please see www.quandl.com/API for more information.")
         raise Exception(error)
@@ -139,7 +138,7 @@ def push(data, code, name, authtoken='', desc='', override=False):
               'update_or_create': override,
               'data': datestr}
 
-    url = QUANDL_API_URL + 'datasets.json?auth_token=' + token
+    url = QUANDL_API_URL + 'datasets.json?auth_token=' + authtoken
     jsonreturn = _htmlpush(url, params)
     if (jsonreturn['errors']
         and jsonreturn['errors']['code'][0] == 'has already been taken'):
@@ -164,15 +163,14 @@ def search(query, source = None, page= 1 , authtoken = None, prints = True):
 
     """
     
-    token = _getauthtoken(authtoken)
     search_url = 'http://www.quandl.com/api/v1/datasets.json?query='
     #parse query for proper API submission
     parsedquery = re.sub(" ", "+", query)
     parsedquery = re.sub("&", "+", parsedquery)
     url = search_url + parsedquery
     #Use authtoken if present
-    if token:
-        url += '&auth_token=' + token
+    if authtoken:
+        url += '&auth_token=' + authtoken
     #Add search source if given
     if source:
         url += '&source_code=' + source
@@ -238,32 +236,6 @@ def _pushcodetest(code):
                  "capital letters, underscores and capital numbers.")
         raise Exception(error)
     return code
-
-
-def _getauthtoken(token):
-    """Return and save API token to a pickle file for reuse."""
-    if sys.platform.startswith('win'):
-        token_path = os.path.expanduser('~/AppData/Roaming/Quandl/')
-    else:
-        token_path = os.path.expanduser('~/Quandl/')
-    if not os.path.exists(token_path):
-        os.mkdir(token_path)
-
-    try:
-        savedtoken = pickle.load(open(os.path.join(token_path,'authtoken.p'), 'rb'))
-    except IOError:
-        savedtoken = False
-    if token:
-        pickle.dump(token, open(os.path.join(token_path, 'authtoken.p'), 'wb'))
-        print("Token {} activated and saved for later use.".format(token))
-    elif not savedtoken and not token:
-        print("No authentication tokens found: usage will be limited.")
-        print("See www.quandl.com/api for more information.")
-    elif savedtoken and not token:
-        token = savedtoken
-        print("Using cached token {} for authentication.".format(token))
-    return token
-
 
 # In lieu of urllib's urlencode, as this handles None values by ignoring them.
 def _append_query_fields(url, **kwargs):
