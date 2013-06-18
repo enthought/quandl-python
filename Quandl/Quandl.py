@@ -12,8 +12,6 @@ import datetime
 import json
 import pandas as pd
 import re
-import os
-import sys
 
 from dateutil import parser
 from numpy import genfromtxt
